@@ -462,8 +462,8 @@ enum actionSheetButtonIndex {
 	else
 	{
 		if ([[request.URL absoluteString] hasPrefix:@"http://www.youtube.com/v/"] ||
-			[[request.URL absoluteString] hasPrefix:@"http://itunes.apple.com/"] ||
-			[[request.URL absoluteString] hasPrefix:@"http://phobos.apple.com/"]) {
+			[[request.URL host] isEqualToString:@"itunes.apple.com"] ||
+			[[request.URL host] isEqualToString:@"phobos.apple.com"]) {
 			[[UIApplication sharedApplication] openURL:request.URL];
 			return NO;
 		}
