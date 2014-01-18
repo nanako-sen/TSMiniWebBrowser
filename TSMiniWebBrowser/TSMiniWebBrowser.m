@@ -180,13 +180,16 @@ enum actionSheetButtonIndex {
     if (mode == TSMiniWebBrowserModeModal) {
         webView = [[UIWebView alloc] initWithFrame:CGRectMake(0, kToolBarHeight, viewSize.width, viewSize.height-kToolBarHeight*2)];
     } else if(mode == TSMiniWebBrowserModeNavigation) {
-        webView = [[UIWebView alloc] initWithFrame:CGRectMake(0, 0, viewSize.width, viewSize.height-kToolBarHeight)];
+        webView = [[UIWebView alloc] initWithFrame:CGRectMake(0, 0, viewSize.width, viewSize.height)];
+        [[webView scrollView] setContentInset:UIEdgeInsetsMake(64, 0, 44, 0)];
+        [[webView scrollView] setScrollIndicatorInsets:UIEdgeInsetsMake(64, 0, 44, 0)];
     } else if(mode == TSMiniWebBrowserModeTabBar) {
         self.view.backgroundColor = [UIColor redColor];
         webView = [[UIWebView alloc] initWithFrame:CGRectMake(0, kToolBarHeight-1, viewSize.width, viewSize.height-kToolBarHeight+1)];
     }
     webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self.view addSubview:webView];
+    [self.view bringSubviewToFront:toolBar];
     
     webView.scalesPageToFit = YES;
     
@@ -215,6 +218,7 @@ enum actionSheetButtonIndex {
         forcedTitleBarText = nil;
         barStyle = UIBarStyleDefault;
 		barTintColor = nil;
+        self.automaticallyAdjustsScrollViewInsets = NO;
     }
     
     return self;
