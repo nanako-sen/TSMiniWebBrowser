@@ -181,8 +181,9 @@ enum actionSheetButtonIndex {
         webView = [[UIWebView alloc] initWithFrame:CGRectMake(0, kToolBarHeight, viewSize.width, viewSize.height-kToolBarHeight*2)];
     } else if(mode == TSMiniWebBrowserModeNavigation) {
         webView = [[UIWebView alloc] initWithFrame:CGRectMake(0, 0, viewSize.width, viewSize.height)];
-        [[webView scrollView] setContentInset:UIEdgeInsetsMake(64, 0, 44, 0)];
-        [[webView scrollView] setScrollIndicatorInsets:UIEdgeInsetsMake(64, 0, 44, 0)];
+        bool translucentNavBar = self.navigationController.navigationBar.isTranslucent;
+        [[webView scrollView] setContentInset:UIEdgeInsetsMake((translucentNavBar ? 64 : 0), 0, 44, 0)];
+        [[webView scrollView] setScrollIndicatorInsets:UIEdgeInsetsMake((translucentNavBar ? 64 : 0), 0, 44, 0)];
     } else if(mode == TSMiniWebBrowserModeTabBar) {
         self.view.backgroundColor = [UIColor redColor];
         webView = [[UIWebView alloc] initWithFrame:CGRectMake(0, kToolBarHeight-1, viewSize.width, viewSize.height-kToolBarHeight+1)];
