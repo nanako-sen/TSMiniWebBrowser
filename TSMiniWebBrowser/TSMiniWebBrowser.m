@@ -39,9 +39,15 @@
 @synthesize barTintColor;
 @synthesize domainLockList;
 @synthesize currentURL;
+@synthesize toolBarTintColor;
+@synthesize statusBarStyle;
+
 
 #define kToolBarHeight  44
 #define kTabBarHeight   49
+
+#define SystemVersionGreaterOrEqualThan(version) ([[[UIDevice currentDevice] systemVersion] floatValue] >= version)
+
 
 enum actionSheetButtonIndex {
 	kSafariButtonIndex,
@@ -80,7 +86,7 @@ enum actionSheetButtonIndex {
     if ( webView.loading ) {
         [webView stopLoading];
     }
-    [self dismissModalViewControllerAnimated:YES];
+    [self dismissViewControllerAnimated:YES completion:nil];
     
     // Notify the delegate
     if (self.delegate != NULL && [self.delegate respondsToSelector:@selector(tsMiniWebBrowserDidDismiss)]) {
@@ -88,12 +94,25 @@ enum actionSheetButtonIndex {
     }
 }
 
+- (CGFloat)navigationBarHeight
+{
+    CGFloat height = 44;
+    if (mode == TSMiniWebBrowserModeModal && SystemVersionGreaterOrEqualThan(7.0)) {
+        height = 64;
+    }
+    return height;
+}
+
+
+
 //Added in the dealloc method to remove the webview delegate, because if you use this in a navigation controller
 //TSMiniWebBrowser can get deallocated while the page is still loading and the web view will call its delegate-- resulting in a crash
 -(void)dealloc
 {
     [webView setDelegate:nil];
 }
+
+
 
 #pragma mark - Init
 
@@ -105,11 +124,14 @@ enum actionSheetButtonIndex {
     titleBar.leftBarButtonItem = buttonDone;
     
     CGFloat width = self.view.frame.size.width;
-    navigationBarModal = [[UINavigationBar alloc] initWithFrame:CGRectMake(0, 0, width, 44)];
+
+    
+    navigationBarModal = [[UINavigationBar alloc] initWithFrame:CGRectMake(0, 0, width, [self navigationBarHeight])];
     //navigationBar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleBottomMargin;
     navigationBarModal.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     navigationBarModal.barStyle = barStyle;
     [navigationBarModal pushNavigationItem:titleBar animated:NO];
+    navigationBarModal.translucent = NO;
     
     [self.view addSubview:navigationBarModal];
 }
@@ -141,10 +163,18 @@ enum actionSheetButtonIndex {
     
     UIBarButtonItem *buttonReload = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"reload_icon.png"] style:UIBarButtonItemStylePlain target:self action:@selector(reloadButtonTouchUp:)];
     
+    
     UIBarButtonItem *fixedSpace2 = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:nil action:nil];
     fixedSpace2.width = 20;
     
     UIBarButtonItem *buttonAction = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction target:self action:@selector(buttonActionTouchUp:)];
+    
+    if (SystemVersionGreaterOrEqualThan(7.0)) {
+        [buttonReload setTintColor:toolBarTintColor];
+        [buttonAction setTintColor:toolBarTintColor];
+        [buttonGoBack setTintColor:toolBarTintColor];
+        [buttonGoForward setTintColor:toolBarTintColor];
+    }
     
     // Activity indicator is a bit special
     activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
@@ -178,7 +208,7 @@ enum actionSheetButtonIndex {
 -(void) initWebView {
     CGSize viewSize = self.view.frame.size;
     if (mode == TSMiniWebBrowserModeModal) {
-        webView = [[UIWebView alloc] initWithFrame:CGRectMake(0, kToolBarHeight, viewSize.width, viewSize.height-kToolBarHeight*2)];
+        webView = [[UIWebView alloc] initWithFrame:CGRectMake(0, [self navigationBarHeight], viewSize.width, viewSize.height-(kToolBarHeight + [self navigationBarHeight]))];
     } else if(mode == TSMiniWebBrowserModeNavigation) {
         webView = [[UIWebView alloc] initWithFrame:CGRectMake(0, 0, viewSize.width, viewSize.height)];
         bool translucentNavBar = self.navigationController.navigationBar.isTranslucent;
@@ -218,8 +248,11 @@ enum actionSheetButtonIndex {
         modalDismissButtonTitle = NSLocalizedString(@"Done", nil);
         forcedTitleBarText = nil;
         barStyle = UIBarStyleDefault;
+        statusBarStyle = UIStatusBarStyleDefault;
 		barTintColor = nil;
-        self.automaticallyAdjustsScrollViewInsets = NO;
+        if (SystemVersionGreaterOrEqualThan(7.0)) {
+            self.automaticallyAdjustsScrollViewInsets = NO;
+        }
     }
     
     return self;
@@ -244,6 +277,7 @@ enum actionSheetButtonIndex {
     // Store the current navigationBar bar style to be able to restore it later.
     if (mode == TSMiniWebBrowserModeNavigation) {
         originalBarStyle = self.navigationController.navigationBar.barStyle;
+        originalStatysBarStyle = [UIApplication sharedApplication].statusBarStyle;
     }
     
     // Init tool bar
@@ -258,7 +292,7 @@ enum actionSheetButtonIndex {
     }
     
     // Status bar style
-    [[UIApplication sharedApplication] setStatusBarStyle:barStyle animated:YES];
+    [[UIApplication sharedApplication] setStatusBarStyle:statusBarStyle animated:YES];
     
     // UI state
     buttonGoBack.enabled = NO;
@@ -297,7 +331,7 @@ enum actionSheetButtonIndex {
     }
     
     // Restore Status bar style
-    [[UIApplication sharedApplication] setStatusBarStyle:originalBarStyle animated:NO];
+    [[UIApplication sharedApplication] setStatusBarStyle:originalStatysBarStyle animated:NO];
     
     // Stop loading
     [webView stopLoading];
